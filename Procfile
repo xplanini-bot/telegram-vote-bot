@@ -1,1 +1,0 @@
-worker: python zdeshniy1.py

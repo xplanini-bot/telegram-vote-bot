@@ -1,9 +1,10 @@
 {
   "name": "bottg",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Telegram voting bot",
+  "main": "zdeshniy2.js",
   "scripts": {
+    "start": "node zdeshniy2.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

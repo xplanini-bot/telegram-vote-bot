@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Telegram voting bot",
   "main": "zdeshniy2.js",
+  "type": "module",
   "scripts": {
     "start": "node zdeshniy2.js",
     "test": "echo \"Error: no test specified\" && exit 1"

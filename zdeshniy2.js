@@ -3,7 +3,7 @@ import { Telegraf, Markup } from "telegraf";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const options = ["23:00", "19:00"];
+const options = ["Месть сурка в 23:00 ", "Месть сурка в 19:00 "];
 let votes = {}; // {user_id: choice}
 
 // Генерация ReplyKeyboardMarkup
@@ -16,7 +16,7 @@ function getKeyboard() {
 // Команда /start
 bot.command("start", (ctx) => {
     ctx.reply(
-        "📊 Когда тебе удобно участвовать в ивенте Тропический лес?\n(Выбери вариант из клавиатуры)",
+        "📊 Выбери время проведения Месть сурка",
         getKeyboard()
     );
 });
@@ -44,11 +44,11 @@ function handleVote(userId, chatId, choice, ctx) {
     Object.values(votes).forEach(v => counts[v]++);
 
     // Сообщение пользователю
-    ctx.reply(`Ты выбрал: ${choice}`);
+    ctx.reply(`Твой выбор: ${choice}`);
 
     // Общий результат в чат
-    let resultText = "📊 Общий результат голосования:\n";
-    options.forEach(opt => resultText += `${opt}: ${counts[opt]} голосов\n`);
+    let resultText = "📊 Результат голосования:\n";
+    options.forEach(opt => resultText += `${opt} : ${counts[opt]} голосов\n`);
 
     ctx.reply(resultText);
 }

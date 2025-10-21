@@ -72,7 +72,7 @@ function handleVote(userId, ctx, choice) {
 
     // Через 60 секунд снова показываем клавиатуру без текста
     setTimeout(() => {
-        ctx.reply("\u200B", getKeyboard()); // невидимый символ + клавиатура
+        ctx.reply("Можно повторно проголосовать", getKeyboard()); // невидимый символ + клавиатура
     }, 60000);
 }
 

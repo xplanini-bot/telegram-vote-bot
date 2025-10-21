@@ -53,10 +53,10 @@ async function isAdmin(ctx) {
             console.log(`  → ${a.user.id} (${a.user.username || a.user.first_name})`);
         });
 
-        // Если сообщение пришло от анонимного администратора
+        // Если сообщение от анонимного администратора (чат-бот)
         if (ctx.message.sender_chat) {
             console.log("Сообщение от анонимного администратора:", ctx.message.sender_chat.id);
-            return true; // разрешаем
+            return true;
         }
 
         return admins.some(admin => admin.user.id === userId);
@@ -65,7 +65,6 @@ async function isAdmin(ctx) {
         return false;
     }
 }
-
 
 // ================== Загрузка голосов ==================
 loadVotes();
@@ -81,34 +80,12 @@ bot.start(async (ctx) => {
     ctx.reply("📊 Выбери время проведения «Месть сурка»", getKeyboard());
 });
 
-// ================== Обработчик текста ==================
+// ================== Обработчик текста (голосование и /reset) ==================
 bot.on("text", async (ctx) => {
     const text = ctx.message.text;
     const userId = ctx.from.id;
 
-    if (!options.includes(text)) return;
-
-    votes[userId] = text;
-    saveVotes();
-
-    // Подсчет голосов
-    const counts = {};
-    options.forEach(opt => counts[opt] = 0);
-    Object.values(votes).forEach(v => counts[v]++);
-
-    let resultText = "📊 Результаты голосования:\n";
-    options.forEach(opt => {
-        resultText += `${opt}: ${counts[opt]} голосов\n`;
-    });
-
-    await ctx.reply(resultText);
-});
-
-// ================== Команда /reset ==================
-bot.on("text", async (ctx) => {
-    const text = ctx.message.text;
-
-    // Если это команда /reset
+    // ================= команда /reset =================
     if (text === "/reset") {
         const admin = await isAdmin(ctx);
         if (!admin) {
@@ -119,11 +96,10 @@ bot.on("text", async (ctx) => {
         votes = {};
         saveVotes();
         await ctx.reply("🔄 Результаты голосования сброшены!");
-        return; // чтобы дальше не обрабатывать как обычное голосование
+        return; // чтобы дальше не шло как обычное голосование
     }
 
     // ================= обычное голосование =================
-    const userId = ctx.from.id;
     if (!options.includes(text)) return;
 
     votes[userId] = text;
@@ -140,8 +116,6 @@ bot.on("text", async (ctx) => {
 
     await ctx.reply(resultText);
 });
-
-
 
 // ================== Запуск бота ==================
 bot.launch();

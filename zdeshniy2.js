@@ -8,6 +8,7 @@ const options = ["Месть сурка в 18:00", "Месть сурка в 20:
 const votesFile = "./votes.json";
 
 let votes = {}; // { user_id: choice }
+let votingActive = false; // флаг активности голосования
 
 // ================== Работа с файлом ==================
 function loadVotes() {
@@ -42,7 +43,6 @@ async function isAdmin(ctx) {
     try {
         const chatId = ctx.chat.id;
         const userId = ctx.from.id;
-
         const admins = await ctx.telegram.getChatAdministrators(chatId);
 
         console.log("🔍 Проверка администратора:");
@@ -77,10 +77,11 @@ bot.start(async (ctx) => {
         return;
     }
 
-    ctx.reply("📊 Выбери время проведения «Месть сурка»", getKeyboard());
+    votingActive = true; // включаем голосование
+    ctx.reply("📊 Голосование открыто! Выбери время проведения «Месть сурка»", getKeyboard());
 });
 
-// ================== Обработчик текста (голосование и /reset) ==================
+// ================== Обработчик текста ==================
 bot.on("text", async (ctx) => {
     const text = ctx.message.text;
     const userId = ctx.from.id;
@@ -96,10 +97,35 @@ bot.on("text", async (ctx) => {
         votes = {};
         saveVotes();
         await ctx.reply("🔄 Результаты голосования сброшены!");
-        return; // чтобы дальше не шло как обычное голосование
+        return;
+    }
+
+    // ================= команда /stop =================
+    if (text === "/stop") {
+        const admin = await isAdmin(ctx);
+        if (!admin) {
+            await ctx.reply("🚫 Только администраторы могут завершить голосование.");
+            return;
+        }
+
+        votingActive = false; // закрываем голосование
+
+        // Подсчет голосов
+        const counts = {};
+        options.forEach(opt => counts[opt] = 0);
+        Object.values(votes).forEach(v => counts[v]++);
+
+        let resultText = "📊 Итоги голосования:\n";
+        options.forEach(opt => {
+            resultText += `${opt}: ${counts[opt]} голосов\n`;
+        });
+
+        await ctx.reply(resultText, Markup.removeKeyboard());
+        return;
     }
 
     // ================= обычное голосование =================
+    if (!votingActive) return; // если голосование закрыто — игнорируем
     if (!options.includes(text)) return;
 
     votes[userId] = text;
@@ -109,7 +135,7 @@ bot.on("text", async (ctx) => {
     options.forEach(opt => counts[opt] = 0);
     Object.values(votes).forEach(v => counts[v]++);
 
-    let resultText = "📊 Результаты голосования:\n";
+    let resultText = "📊 Текущие результаты голосования:\n";
     options.forEach(opt => {
         resultText += `${opt}: ${counts[opt]} голосов\n`;
     });

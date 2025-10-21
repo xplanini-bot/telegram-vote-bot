@@ -3,7 +3,7 @@ import { Telegraf, Markup } from "telegraf";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const options = ["Месть сурка в 23:00", "Месть сурка в 19:00"];
+const options = ["Месть сурка в 18:00", "Месть сурка в 20:00", "Месть сурка в 22:00"];
 let votes = {}; // {user_id: choice}
 
 // Генерация ReplyKeyboardMarkup
@@ -47,7 +47,7 @@ function handleVote(userId, chatId, choice, ctx) {
     ctx.reply(resultText, Markup.removeKeyboard()); //убрать клавиатуру
 
     setTimeout(() => {
-    ctx.reply(getKeyboard()); // снова показываем кнопки
+    ctx.reply(" ", getKeyboard()); // снова показываем кнопки, пустой текст
 }, 60000);
 
 }

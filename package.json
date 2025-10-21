@@ -21,6 +21,7 @@
   "homepage": "https://github.com/xplanini-bot/telegram-vote-bot#readme",
   "dependencies": {
     "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "telegraf": "^4.16.3"
   }
 }

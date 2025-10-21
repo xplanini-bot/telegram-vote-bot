@@ -7,7 +7,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const options = ["Месть сурка в 18:00", "Месть сурка в 20:00", "Месть сурка в 22:00"];
 const votesFile = "./votes.json";
 
-let votes = {}; // {user_id: choice}
+let votes = {}; // { user_id: choice }
 
 // ================== Работа с файлом ==================
 function loadVotes() {
@@ -37,11 +37,31 @@ function getKeyboard() {
         .oneTime(false);
 }
 
+// ================== Проверка администратора ==================
+async function isAdmin(ctx) {
+    try {
+        const chatId = ctx.chat.id;
+        const userId = ctx.from.id;
+
+        const admins = await ctx.telegram.getChatAdministrators(chatId);
+        return admins.some(admin => admin.user.id === userId);
+    } catch (err) {
+        console.error("Ошибка при проверке администратора:", err);
+        return false;
+    }
+}
+
 // ================== Загрузка голосов ==================
 loadVotes();
 
 // ================== Команда /start ==================
-bot.start(ctx => {
+bot.start(async (ctx) => {
+    const admin = await isAdmin(ctx);
+    if (!admin) {
+        await ctx.reply("🚫 Только администраторы могут запускать голосование.");
+        return;
+    }
+
     ctx.reply("📊 Выбери время проведения «Месть сурка»", getKeyboard());
 });
 
@@ -50,22 +70,35 @@ bot.on("text", async (ctx) => {
     const text = ctx.message.text;
     const userId = ctx.from.id;
 
-    if (!options.includes(text)) return; // игнорируем всё, кроме вариантов
+    if (!options.includes(text)) return;
 
-    votes[userId] = text; // сохраняем выбор пользователя
+    votes[userId] = text;
     saveVotes();
 
-    // Подсчёт голосов
+    // Подсчет голосов
     const counts = {};
     options.forEach(opt => counts[opt] = 0);
     Object.values(votes).forEach(v => counts[v]++);
 
-    // Формируем текст результата
-    let resultText = "📊 Результат голосования:\n";
-    options.forEach(opt => resultText += `${opt}: ${counts[opt]} голосов\n`);
+    let resultText = "📊 Результаты голосования:\n";
+    options.forEach(opt => {
+        resultText += `${opt}: ${counts[opt]} голосов\n`;
+    });
 
-    // Отправляем обновлённый результат в чат
     await ctx.reply(resultText);
+});
+
+// ================== Команда /reset ==================
+bot.command("reset", async (ctx) => {
+    const admin = await isAdmin(ctx);
+    if (!admin) {
+        await ctx.reply("🚫 Только администраторы могут сбросить результаты голосования.");
+        return;
+    }
+
+    votes = {};
+    saveVotes();
+    await ctx.reply("🔄 Результаты голосования сброшены!");
 });
 
 // ================== Запуск бота ==================
@@ -74,12 +107,6 @@ console.log("Бот запущен...");
 
 // ================== HTTP-сервер для Render ==================
 const app = express();
-
-app.get("/", (req, res) => {
-    res.send("Bot is running");
-});
-
-const PORT = process.env.PORT || 10000; // Render автоматически подставляет порт
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-});
+app.get("/", (req, res) => res.send("Bot is running"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

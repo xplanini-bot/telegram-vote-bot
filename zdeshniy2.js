@@ -47,11 +47,17 @@ async function isAdmin(ctx) {
 
         console.log("🔍 Проверка администратора:");
         console.log("Чат ID:", chatId);
-        console.log("Пользователь ID:", userId, "-", ctx.from.username);
+        console.log("Пользователь ID:", userId, "-", ctx.from.username || ctx.from.first_name);
         console.log("Список админов:");
         admins.forEach(a => {
             console.log(`  → ${a.user.id} (${a.user.username || a.user.first_name})`);
         });
+
+        // Если сообщение пришло от анонимного администратора
+        if (ctx.message.sender_chat) {
+            console.log("Сообщение от анонимного администратора:", ctx.message.sender_chat.id);
+            return true; // разрешаем
+        }
 
         return admins.some(admin => admin.user.id === userId);
     } catch (err) {
@@ -59,6 +65,7 @@ async function isAdmin(ctx) {
         return false;
     }
 }
+
 
 // ================== Загрузка голосов ==================
 loadVotes();

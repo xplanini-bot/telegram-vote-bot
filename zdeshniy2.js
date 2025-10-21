@@ -40,9 +40,6 @@ function handleVote(userId, chatId, choice, ctx) {
     options.forEach(opt => counts[opt] = 0);
     Object.values(votes).forEach(v => counts[v]++);
 
-    // Сообщение пользователю
-    ctx.reply(`✅ Твой выбор: ${choice}`);
-
     // Общий результат в чат
     let resultText = "📊 Результат голосования:\n";
     options.forEach(opt => resultText += `${opt} : ${counts[opt]} голосов\n`);

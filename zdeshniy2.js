@@ -72,8 +72,8 @@ function handleVote(userId, ctx, choice) {
 
     // Через 60 секунд снова показываем клавиатуру без текста
     setTimeout(() => {
-        ctx.reply(" ", getKeyboard()); // пустой текст + клавиатура
-    }, 6000);
+        ctx.reply("\u200B", getKeyboard()); // невидимый символ + клавиатура
+    }, 60000);
 }
 
 bot.launch();

@@ -105,17 +105,43 @@ bot.on("text", async (ctx) => {
 });
 
 // ================== Команда /reset ==================
-bot.command("reset", async (ctx) => {
-    const admin = await isAdmin(ctx);
-    if (!admin) {
-        await ctx.reply("🚫 Только администраторы могут сбросить результаты голосования.");
-        return;
+bot.on("text", async (ctx) => {
+    const text = ctx.message.text;
+
+    // Если это команда /reset
+    if (text === "/reset") {
+        const admin = await isAdmin(ctx);
+        if (!admin) {
+            await ctx.reply("🚫 Только администраторы могут сбросить результаты голосования.");
+            return;
+        }
+
+        votes = {};
+        saveVotes();
+        await ctx.reply("🔄 Результаты голосования сброшены!");
+        return; // чтобы дальше не обрабатывать как обычное голосование
     }
 
-    votes = {};
+    // ================= обычное голосование =================
+    const userId = ctx.from.id;
+    if (!options.includes(text)) return;
+
+    votes[userId] = text;
     saveVotes();
-    await ctx.reply("🔄 Результаты голосования сброшены!");
+
+    const counts = {};
+    options.forEach(opt => counts[opt] = 0);
+    Object.values(votes).forEach(v => counts[v]++);
+
+    let resultText = "📊 Результаты голосования:\n";
+    options.forEach(opt => {
+        resultText += `${opt}: ${counts[opt]} голосов\n`;
+    });
+
+    await ctx.reply(resultText);
 });
+
+
 
 // ================== Запуск бота ==================
 bot.launch();

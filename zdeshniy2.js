@@ -56,15 +56,34 @@ bot.on("text", async (ctx) => {
 
     // Проверка cooldown
     if (cooldown[userId] && now < cooldown[userId]) {
-        await ctx.replyWithMarkdown(`⏳ @${ctx.from.username}, подожди минуту перед повторным голосованием`);
+        await ctx.telegram.sendMessage(userId, "⏳ Подожди минуту перед повторным голосованием");
         return;
     }
 
     // Устанавливаем блокировку на 60 секунд
     cooldown[userId] = now + 60 * 1000;
 
-    await handleVote(userId, ctx, text);
+    // Сохраняем голос, но **не отправляем текст кнопки в группу**
+    votes[userId] = text;
+    saveVotes();
+
+    // Подсчет голосов
+    const counts = {};
+    options.forEach(opt => counts[opt] = 0);
+    Object.values(votes).forEach(v => counts[v]++);
+
+    let resultText = "📊 Результат голосования:\n";
+    options.forEach(opt => resultText += `${opt} : ${counts[opt]} голосов\n`);
+
+    // Отправляем только итог голосования всем в группе
+    await ctx.reply(resultText);
+
+    // Лично пользователю уведомление о блокировке
+    if (!ctx.from.is_bot) {
+        await ctx.telegram.sendMessage(userId, "✅ Можно проголосовать повторно через минуту");
+    }
 });
+
 
 // ================== Функция подсчета и отправки результатов ==================
 async function handleVote(userId, ctx, choice) {

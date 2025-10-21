@@ -59,6 +59,10 @@ bot.on("text", async (ctx) => {
         return;
     }
 
+    // Устанавливаем блокировку на 60 секунд
+    cooldown[userId] = now + 60 * 1000;
+
+    // Обработка голосования
     await handleVote(userId, ctx, text);
 });
 
@@ -66,9 +70,6 @@ bot.on("text", async (ctx) => {
 async function handleVote(userId, ctx, choice) {
     votes[userId] = choice;
     saveVotes(); // сохраняем сразу после изменения
-
-    // Устанавливаем блокировку на 60 секунд
-    cooldown[userId] = Date.now() + 60 * 1000;
 
     // Подсчет голосов
     const counts = {};

@@ -44,6 +44,15 @@ async function isAdmin(ctx) {
         const userId = ctx.from.id;
 
         const admins = await ctx.telegram.getChatAdministrators(chatId);
+
+        console.log("🔍 Проверка администратора:");
+        console.log("Чат ID:", chatId);
+        console.log("Пользователь ID:", userId, "-", ctx.from.username);
+        console.log("Список админов:");
+        admins.forEach(a => {
+            console.log(`  → ${a.user.id} (${a.user.username || a.user.first_name})`);
+        });
+
         return admins.some(admin => admin.user.id === userId);
     } catch (err) {
         console.error("Ошибка при проверке администратора:", err);

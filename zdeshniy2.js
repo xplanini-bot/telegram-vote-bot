@@ -1,15 +1,16 @@
 import 'dotenv/config';
 import { Telegraf, Markup } from "telegraf";
 import fs from "fs";
+import express from "express";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-
 const options = ["Месть сурка в 18:00", "Месть сурка в 20:00", "Месть сурка в 22:00"];
 const votesFile = "./votes.json";
-let votes = {}; // {user_id: choice}
+
+let votes = {};    // {user_id: choice}
 let cooldown = {}; // {user_id: timestamp когда можно голосовать снова}
 
-// Функции для работы с файлом голосов
+// ================== Работа с файлом ==================
 function loadVotes() {
     try {
         if (fs.existsSync(votesFile)) {
@@ -30,22 +31,22 @@ function saveVotes() {
     }
 }
 
-// Генерация ReplyKeyboardMarkup
+// ================== Клавиатура ==================
 function getKeyboard() {
     return Markup.keyboard(options.map(opt => [opt]))
                  .resize()
                  .oneTime(false);
 }
 
-// Загружаем голоса при старте
+// ================== Загрузка голосов ==================
 loadVotes();
 
-// Команда /start
+// ================== Команда /start ==================
 bot.start(ctx => {
     ctx.reply("📊 Выбери время проведения Месть сурка", getKeyboard());
 });
 
-// Обработчик текста
+// ================== Обработчик текста ==================
 bot.on("text", async (ctx) => {
     const text = ctx.message.text;
     const userId = ctx.from.id;
@@ -53,23 +54,22 @@ bot.on("text", async (ctx) => {
 
     if (!options.includes(text)) return;
 
-    // Проверяем, находится ли пользователь на "cooldown"
+    // Проверка cooldown
     if (cooldown[userId] && now < cooldown[userId]) {
-        await ctx.telegram.sendMessage(userId, "⏳ Подожди минуту перед повторным голосованием");
+        await ctx.replyWithMarkdown(`⏳ @${ctx.from.username}, подожди минуту перед повторным голосованием`);
         return;
     }
 
     // Устанавливаем блокировку на 60 секунд
     cooldown[userId] = now + 60 * 1000;
 
-    // Обработка голосования
     await handleVote(userId, ctx, text);
 });
 
-// Функция подсчета голосов и отправки результатов
+// ================== Функция подсчета и отправки результатов ==================
 async function handleVote(userId, ctx, choice) {
     votes[userId] = choice;
-    saveVotes(); // сохраняем сразу после изменения
+    saveVotes(); // сохраняем после изменения
 
     // Подсчет голосов
     const counts = {};
@@ -79,12 +79,27 @@ async function handleVote(userId, ctx, choice) {
     let resultText = "📊 Результат голосования:\n";
     options.forEach(opt => resultText += `${opt} : ${counts[opt]} голосов\n`);
 
-    // Отправляем результат в группу (всем)
+    // Отправляем результат всем в группе
     await ctx.reply(resultText);
 
-    // Лично пользователю уведомление о блокировке
-    await ctx.telegram.sendMessage(userId, "✅ Можно проголосовать повторно через минуту");
+    // Личное уведомление о cooldown (если админ не анонимен)
+    if (!ctx.from.is_bot) {
+        await ctx.telegram.sendMessage(userId, "✅ Можно проголосовать повторно через минуту");
+    }
 }
 
+// ================== Запуск бота ==================
 bot.launch();
 console.log("Бот запущен...");
+
+// ================== HTTP-сервер для Render ==================
+const app = express();
+
+app.get("/", (req, res) => {
+    res.send("Bot is running");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+});

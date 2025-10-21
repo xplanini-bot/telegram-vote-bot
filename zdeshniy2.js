@@ -45,17 +45,17 @@ bot.start(ctx => {
 });
 
 // Обработчик текста
-bot.on("text", (ctx) => {
+bot.on("text", async (ctx) => {
     const text = ctx.message.text;
     const userId = ctx.from.id;
 
     if (!options.includes(text)) return;
 
-    handleVote(userId, ctx, text);
+    await handleVote(userId, ctx, text);
 });
 
 // Функция подсчета голосов и отправки результатов
-function handleVote(userId, ctx, choice) {
+async function handleVote(userId, ctx, choice) {
     votes[userId] = choice;
     saveVotes(); // сохраняем сразу после изменения
 
@@ -67,13 +67,21 @@ function handleVote(userId, ctx, choice) {
     let resultText = "📊 Результат голосования:\n";
     options.forEach(opt => resultText += `${opt} : ${counts[opt]} голосов\n`);
 
-    // Убираем клавиатуру и отправляем результат
-    ctx.reply(resultText, Markup.removeKeyboard());
+    // Отправляем результат в группу
+    await ctx.reply(resultText);
+    
+    // Убираем клавиатуру только у пользователя через личное сообщение
+    await ctx.telegram.sendMessage(userId, "Можно будет проголосовать повторно через минуту", { reply_markup: { remove_keyboard: true } });
 
-    // Через 60 секунд снова показываем клавиатуру без текста
-    setTimeout(() => {
-        ctx.reply("Можно повторно проголосовать", getKeyboard()); // невидимый символ + клавиатура
+    // Через 60 секунд снова отправляем клавиатуру пользователю
+    setTimeout(async () => {
+        await ctx.telegram.sendMessage(
+            userId,
+            "Можно изменить вариант голосования",
+            { reply_markup: getKeyboard().reply_markup }
+        );
     }, 60000);
+
 }
 
 bot.launch();

@@ -44,7 +44,12 @@ function handleVote(userId, chatId, choice, ctx) {
     let resultText = "📊 Результат голосования:\n";
     options.forEach(opt => resultText += `${opt} : ${counts[opt]} голосов\n`);
 
-    ctx.reply(resultText);
+    ctx.reply(resultText, Markup.removeKeyboard()); //убрать клавиатуру
+
+    setTimeout(() => {
+    ctx.reply(getKeyboard()); // снова показываем кнопки
+}, 60000);
+
 }
 
 bot.launch();

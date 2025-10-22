@@ -5,7 +5,10 @@ import express from "express";
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const options = ["Месть сурка в 18:00", "Месть сурка в 20:00", "Месть сурка в 22:00"];
-const votesFile = "./votes.json";
+const votesFile = "/tmp/votes.json";
+if (!fs.existsSync(votesFile)) {
+  fs.writeFileSync(votesFile, "{}");
+}
 
 let votes = {}; // { user_id: choice }
 let votingActive = false; // флаг активности голосования
